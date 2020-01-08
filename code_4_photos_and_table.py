@@ -4,8 +4,9 @@ sp.call('cls',shell=True)
 logging.basicConfig(format='%(asctime)s - %(message)s',level=logging.INFO)
 logging.info("Flight Checking Procedures")
 #info, debug,warning, eror,critical
-from picamera.array import PiRGBArray
-from picamera import PiCamera
+
+#from picamera.array import PiRGBArray
+#from picamera import PiCamera
 
 import dronekit_sitl
 from dronekit import connect, VehicleMode, LocationGlobal, LocationGlobalRelative # Import DroneKit-Python
@@ -13,22 +14,57 @@ from pymavlink import mavutil
 import time 
 import os
 import numpy as np
+import csv
 
-
+#Connection-------------------------------------------
 #SITL
 #connection_string = '127.0.0.1:14550'
 #sitl = dronekit_sitl.start_default()
 
 #Actual Drone over micro USB Direrctly
-#connection_string = '/dev/ttyACM0'
-connection_string = '192.168.43.220:14550'
+#(connection_string = '/dev/ttyACM0')
 
-#Camea
-camera = PiCamera()
+#connection_string = '192.168.43.220:14550'
 
+#Camera-----------------------------------------------------
+#camera = PiCamera()
+
+
+#Initialization Variables-----------------------------------
 alti = 15
+waypoints = np.zeros((10,5))
+current_waypoint = 0
+current_photo = 0
 
-#connection to FC
+#methods----------------------------------------------------
+'''
+def send_ned_velociry(velocity_x, velocity_y, velocity_z, duration):
+    msg = vehicle.message_factory.set_position_target_local_ned_encode(
+        0,       # time_boot_ms (not used)
+        0, 0,    # target system, target component
+        mavutil.mavlink.MAV_FRAME_LOCAL_NED, # frame
+        0b0000111111000111, # type_mask (only speeds enabled)
+        0, 0, 0, # x, y, z positions (not used)
+        velocity_x, velocity_y, velocity_z, # x, y, z velocity in m/s
+        0, 0, 0, # x, y, z acceleration (not supported yet, ignored in GCS_Mavlink)
+        0, 0)    # yaw, yaw_rate (not supported yet, ignored in GCS_Mavlink))
+
+    for x in range(0,duration):
+        vehicle.send_mavlink(msg)
+        time.sleep(1)
+'''
+def read_waypoints():
+	with open('waypoints.txt','rt') as file:
+		waypoint_data = csv.reader(file)
+		line = 0;
+		for row in waypoint_data:
+			for column in range(0,5):
+				waypoints[line][column]= row[column]
+			line = line + 1
+		print(waypoints)
+
+
+#connection to FC-------------------------------------------
 '''
 try:
     logging.info("Connecting to vehicle on: %s" % (connection_string,))
@@ -38,7 +74,7 @@ except:
     logging.info("Connection to FC: No go ")
 '''
 
-#Radio for emergency control
+#Radio for emergency control---------------------------------
 
 '''
 
@@ -68,7 +104,7 @@ except:
     
 
 
-#Arming check
+#Arming check-----------------------------------------------
 
 try: 
     logging.info("Pre Arm check")
@@ -100,9 +136,10 @@ try:
 except:
     logging.info("Arming : No Go")
 '''
-print("Guidance is internal--------------------------\n\n")
+print("\nGuidance is internal--------------------------\n")
 '''
 
+#take off------------------------------------------------
 logging.info("Arming Motors")
 vehicle.mode = VehicleMode("GUIDED")
 vehicle.armed = True
@@ -121,29 +158,16 @@ while True:
         logging.info("Altitude Reached")
         break
     time.sleep(1)
-#----------------Simple Mission---------------------------------------------------
+
 time.sleep(2)
 '''
+read_waypoints()
 '''
-def send_ned_velociry(velocity_x, velocity_y, velocity_z, duration):
-    msg = vehicle.message_factory.set_position_target_local_ned_encode(
-        0,       # time_boot_ms (not used)
-        0, 0,    # target system, target component
-        mavutil.mavlink.MAV_FRAME_LOCAL_NED, # frame
-        0b0000111111000111, # type_mask (only speeds enabled)
-        0, 0, 0, # x, y, z positions (not used)
-        velocity_x, velocity_y, velocity_z, # x, y, z velocity in m/s
-        0, 0, 0, # x, y, z acceleration (not supported yet, ignored in GCS_Mavlink)
-        0, 0)    # yaw, yaw_rate (not supported yet, ignored in GCS_Mavlink))
-
-    for x in range(0,duration):
-        vehicle.send_mavlink(msg)
-        time.sleep(1)
 
 send_ned_velociry(2,0,-5,5)
 
 '''
-
+'''
 logging.info("Ready to move to 1st waypoint")
 vehicle.airspeed = 3;
 
@@ -155,19 +179,11 @@ time.sleep(30)
 
 vehicle.gimbal.rotate(45,0,0)
 loging.info("Gimble done")
+'''
 
-print("Going towards Second point for 30 seconds ...")
-point1 = LocationGlobalRelative(6.7982676, 79.8999327, alti)
-vehicle.simple_goto(point1)
 # time.sleep(30)
 
-while True:
-    #mode:0-return to home location
-    #mode:1-searching through way points
-    #mode:2-go to a human detected location
-    #
-    gps_point = get_way_point(mode)# send mode,returns (lat,lon,attitude)
-    point = LocationGlobalRelative(gps_point[0],gps_point[1] , gps_point[2])
+
     
 
 #----------------------------------------------------------
@@ -181,10 +197,7 @@ vehicle.mode = VehicleMode("LAND")
 while vehicle.armed:
     time.sleep(1)
 
-'''
 
-while True:
-    print(" Gimbal status: %s" % vehicle.gimbal)
-    time.sleep(1)
 
 vehicle.close()
+'''
