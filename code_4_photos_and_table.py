@@ -4,7 +4,8 @@ sp.call('cls',shell=True)
 logging.basicConfig(format='%(asctime)s - %(message)s',level=logging.INFO)
 logging.info("Flight Checking Procedures")
 #info, debug,warning, eror,critical
-
+from picamera.array import PiRGBArray
+from picamera import PiCamera
 
 import dronekit_sitl
 from dronekit import connect, VehicleMode, LocationGlobal, LocationGlobalRelative # Import DroneKit-Python
@@ -22,15 +23,20 @@ import numpy as np
 #connection_string = '/dev/ttyACM0'
 connection_string = '192.168.43.220:14550'
 
+#Camea
+camera = PiCamera()
+
 alti = 15
 
 #connection to FC
+'''
 try:
     logging.info("Connecting to vehicle on: %s" % (connection_string,))
     vehicle = connect(connection_string, wait_ready=True)
     logging.info("Connection to FC: Go ")
 except:
     logging.info("Connection to FC: No go ")
+'''
 
 #Radio for emergency control
 
@@ -137,29 +143,32 @@ def send_ned_velociry(velocity_x, velocity_y, velocity_z, duration):
 send_ned_velociry(2,0,-5,5)
 
 '''
-vehicle.mode = VehicleMode("GUIDED")
-print(" Gimbal status: %s" % vehicle.gimbal)
-vehicle.gimbal.rotate(-45,-45,0)
-print("Gimble done")
 
-# logging.info("Ready to move to 1st waypoint")
-# vehicle.airspeed = 3;
+logging.info("Ready to move to 1st waypoint")
+vehicle.airspeed = 3;
 
-# print("Going towards first point for 30 seconds ...")
-# point1 = LocationGlobalRelative(6.7980226, 79.8995304, alti)
-# print("Global Location:", vehicle.location.global_relative_frame)
-# vehicle.simple_goto(point1)
+logging.info("Going towards first point for 30 seconds ...")
+point1 = LocationGlobalRelative(6.7980226, 79.8995304, alti)
+loging.info("Global Location:", vehicle.location.global_relative_frame)
+vehicle.simple_goto(point1)
+time.sleep(30)
+
+vehicle.gimbal.rotate(45,0,0)
+loging.info("Gimble done")
+
+print("Going towards Second point for 30 seconds ...")
+point1 = LocationGlobalRelative(6.7982676, 79.8999327, alti)
+vehicle.simple_goto(point1)
 # time.sleep(30)
 
-# print("Going towards Second point for 30 seconds ...")
-# point1 = LocationGlobalRelative(6.7982676, 79.8999327, alti)
-# vehicle.simple_goto(point1)
-# time.sleep(30)
-
-# print("Going towards Third point for 30 seconds ...")
-# point1 = LocationGlobalRelative(6.7979906, 79.8998040, alti)
-# vehicle.simple_goto(point1)
-# time.sleep(30)
+while True:
+    #mode:0-return to home location
+    #mode:1-searching through way points
+    #mode:2-go to a human detected location
+    #
+    gps_point = get_way_point(mode)# send mode,returns (lat,lon,attitude)
+    point = LocationGlobalRelative(gps_point[0],gps_point[1] , gps_point[2])
+    
 
 #----------------------------------------------------------
 '''
@@ -173,7 +182,6 @@ while vehicle.armed:
     time.sleep(1)
 
 '''
-
 
 while True:
     print(" Gimbal status: %s" % vehicle.gimbal)
