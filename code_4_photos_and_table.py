@@ -102,8 +102,8 @@ vehicle.mode = VehicleMode("GUIDED")
 vehicle.armed = True
 
 while not vehicle.armed:
-	logging.info("Arming")
-	time.sleep(1)
+    logging.info("Arming")
+    time.sleep(1)
 
 time.sleep(5)
 logging.info("Ready to take off")
@@ -137,6 +137,10 @@ def send_ned_velociry(velocity_x, velocity_y, velocity_z, duration):
 send_ned_velociry(2,0,-5,5)
 
 '''
+vehicle.mode = VehicleMode("GUIDED")
+print(" Gimbal status: %s" % vehicle.gimbal)
+vehicle.gimbal.rotate(-45,-45,0)
+print("Gimble done")
 
 # logging.info("Ready to move to 1st waypoint")
 # vehicle.airspeed = 3;
@@ -172,6 +176,7 @@ while vehicle.armed:
 
 
 while True:
-    time.s
+    print(" Gimbal status: %s" % vehicle.gimbal)
+    time.sleep(1)
 
 vehicle.close()
