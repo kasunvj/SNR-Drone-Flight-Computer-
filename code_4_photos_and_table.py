@@ -37,6 +37,7 @@ waypoints = np.zeros((10,5))
 current_waypoint = 0
 current_photo = 0
 test_com = False
+photo_time_interval = 3
 
 #methods----------------------------------------------------
 '''
@@ -88,6 +89,21 @@ def position_euclidian_dist(lat1,lon1,lat2,lon2):
 def height_euclidian_dist(h1,h2):
 	return h2-h1
 
+
+def timestamp(waypoint,number):
+	if waypoint<10:
+		name_waypoint = "0"+str(waypoint)
+	else:
+		name_waypoint = str(waypoint)
+
+	if number<10:
+		name_number = "0"+str(number)
+	else:
+		name_number = str(number)
+
+	name = name_waypoint+name_number+" "+time.ctime()
+
+	return name
 
 
 
@@ -169,6 +185,7 @@ except:
 '''
 while not test_com:
 	logging.critical("Communication error")
+	time.sleep(10)
 
 print("\nGuidance is internal--------------------------\n")
 
@@ -214,16 +231,19 @@ while (current_waypoint < get_non_zero_rows(waypoints)):
     #sending moving command
     vehicle.simple_goto(point)
 
+    #getting details of vehical location
     vehicle_location_info = vehicle.location.global_relative_frame
     lat0 = vehicle_location_info.lat
     lon0 = vehicle_location_info.lon
     alt0 = vehicle_location_info.alt  
-
     position_remaining = position_euclidian_dist(lat,lon,lat0,lon0)*100000
     alt_remaining = height_euclidian_dist(alt,alt0)
     print(round(position_remaining,2))
     print(round(alt_remaining,2))
 
+    #image tagging
+    photo_number = 0;
+    time1 = time.time()
 
     while ((position_remaining > 5) or (abs(alt_remaining)> 1)):
         
@@ -235,6 +255,17 @@ while (current_waypoint < get_non_zero_rows(waypoints)):
         alt_remaining = height_euclidian_dist(alt,alt0)
 
         print("GPS Euclidian Dist:",round(position_remaining,2),"Alt remaining(m):",round(alt_remaining,2)) 
+
+        
+        
+        time2 = time.time()
+        if (time2 - time1)> photo_time_interval :
+        	#takeing image
+        	#camera.capture()
+        	photo_number = photo_number + 1 
+        	print("D:/Projects/Research_Project/SNR-Drone-Flight-Computer-/",timestamp(current_waypoint,photo_number),".jpg")
+        	time1 = time2
+
         time.sleep(0.5)
 
 
