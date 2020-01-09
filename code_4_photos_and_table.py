@@ -15,16 +15,17 @@ import time
 import os
 import numpy as np
 import csv
+import math
 
 #Connection-------------------------------------------
 #SITL
-#connection_string = '127.0.0.1:14550'
-#sitl = dronekit_sitl.start_default()
+connection_string = '127.0.0.1:14550'
+sitl = dronekit_sitl.start_default()
 
 #Actual Drone over micro USB Direrctly
 #(connection_string = '/dev/ttyACM0')
 
-connection_string = '192.168.43.220:14550'
+#connection_string = '192.168.43.220:14550'
 
 #Camera-----------------------------------------------------
 #camera = PiCamera()
@@ -35,6 +36,7 @@ alti = 15
 waypoints = np.zeros((10,5))
 current_waypoint = 0
 current_photo = 0
+test_com = False
 
 #methods----------------------------------------------------
 '''
@@ -71,14 +73,20 @@ def load_waypoints():
             for column in range(0,5):
                 waypoints[line][column]= row[column]
             line = line + 1
-        print(waypoints)
+    logging.info("waypoints loaded")
 
 def get_gimbal_angle():
     gimbal_pitch = 45
     gimbal_roll = 0
     gimbal = [gimbal_pitch,gimbal_roll]
     return gimbal
+
+def position_euclidian_dist(lat1,lon1,lat2,lon2):
+	return math.sqrt(math.pow(lat2-lat1,2) + math.pow(lon2-lon1,2))
+
     
+def height_euclidian_dist(h1,h2):
+	return h2-h1
 
 
 
@@ -89,8 +97,11 @@ try:
     logging.info("Connecting to vehicle on: %s" % (connection_string,))
     vehicle = connect(connection_string, wait_ready=True)
     logging.info("Connection to FC: Go ")
+    test_com = True
 except:
     logging.info("Connection to FC: No go ")
+    test_com = False
+
 
 
 
@@ -156,8 +167,11 @@ try:
 except:
     logging.info("Arming : No Go")
 '''
+while not test_com:
+	logging.critical("Communication error")
+
 print("\nGuidance is internal--------------------------\n")
-'''
+
 
 #take off------------------------------------------------
 logging.info("Arming Motors")
@@ -180,7 +194,7 @@ while True:
     time.sleep(1)
 
 time.sleep(2)
-'''
+
 load_waypoints()
 
 home_tag = vehicle.location.global_relative_frame
@@ -198,24 +212,39 @@ while (current_waypoint < get_non_zero_rows(waypoints)):
     logging.info("Gimble Pitch: %s Roll: %s",get_gimbal_angle()[0],get_gimbal_angle()[1])
 
     #sending moving command
-   # vehicle.simple_goto(point)
-    
+    vehicle.simple_goto(point)
 
-    while True:
-        vehicle.mode = VehicleMode("GUIDED")
+    vehicle_location_info = vehicle.location.global_relative_frame
+    lat0 = vehicle_location_info.lat
+    lon0 = vehicle_location_info.lon
+    alt0 = vehicle_location_info.alt  
+
+    position_remaining = position_euclidian_dist(lat,lon,lat0,lon0)*100000
+    alt_remaining = height_euclidian_dist(alt,alt0)
+    print(round(position_remaining,2))
+    print(round(alt_remaining,2))
+
+
+    while ((position_remaining > 5) or (abs(alt_remaining)> 1)):
+        
         vehicle_location_info = vehicle.location.global_relative_frame
         lat0 = vehicle_location_info.lat
         lon0 = vehicle_location_info.lon
         alt0 = vehicle_location_info.alt
-        print(lat0,lon0,alt0)
-        time.sleep(0.05)
+        position_remaining = position_euclidian_dist(lat,lon,lat0,lon0)*100000
+        alt_remaining = height_euclidian_dist(alt,alt0)
+
+        print("GPS Euclidian Dist:",round(position_remaining,2),"Alt remaining(m):",round(alt_remaining,2)) 
+        time.sleep(0.5)
+
+
+    logging.info("waypont reach: %s", current_waypoint+1)
 
 
     current_waypoint = current_waypoint +1 
     #current_waypoint is the waypoint drone directing to
 
-    while (True):
-        pass
+    
 
 
 
@@ -244,7 +273,7 @@ loging.info("Gimble done")
     
 
 #----------------------------------------------------------
-'''
+
 logging.info("Mission Done")
 
 
@@ -257,4 +286,3 @@ while vehicle.armed:
 
 
 vehicle.close()
-'''

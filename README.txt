@@ -4,6 +4,8 @@
 *Terminal 1 - Start SITL: 
 dronekit-sitl copter --home=7.086271,80.038264,0,0
 dronekit-sitl copter --home=6.796470,79.902294,0,0
+mora ground
+dronekit-sitl copter --home=6.7975379,79.8993748,0,0 
 
 *Terminal 2 - Start MavProxy:
 mavproxy --master tcp:127.0.0.1:5760 --out udp:127.0.0.1:14550 --out udp:127.0.0.1:14552
