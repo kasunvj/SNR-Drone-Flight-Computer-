@@ -24,7 +24,7 @@ import csv
 #Actual Drone over micro USB Direrctly
 #(connection_string = '/dev/ttyACM0')
 
-#connection_string = '192.168.43.220:14550'
+connection_string = '192.168.43.220:14550'
 
 #Camera-----------------------------------------------------
 #camera = PiCamera()
@@ -54,44 +54,45 @@ def send_ned_velociry(velocity_x, velocity_y, velocity_z, duration):
         time.sleep(1)
 '''
 def get_non_zero_rows(matrix):
-	# return the number of active (non zero) rows in a 2D matrix
-	non_zero_rows = 0
-	for i in range(0,matrix.shape[0]):
-		if matrix[i][0] != 0:
-			non_zero_rows = non_zero_rows +1
-	return non_zero_rows
+    # return the number of active (non zero) rows in a 2D matrix
+    non_zero_rows = 0
+    for i in range(0,matrix.shape[0]):
+        if matrix[i][0] != 0:
+            non_zero_rows = non_zero_rows +1
+    return non_zero_rows
 
 
 def load_waypoints():
-	# 1st waypoint is the Starting Waypoint
-	with open('waypoints.txt','rt') as file:
-		waypoint_data = csv.reader(file)
-		line = 0;
-		for row in waypoint_data:
-			for column in range(0,5):
-				waypoints[line][column]= row[column]
-			line = line + 1
-		print(waypoints)
+    # 1st waypoint is the Starting Waypoint
+    with open('waypoints.txt','rt') as file:
+        waypoint_data = csv.reader(file)
+        line = 0;
+        for row in waypoint_data:
+            for column in range(0,5):
+                waypoints[line][column]= row[column]
+            line = line + 1
+        print(waypoints)
 
 def get_gimbal_angle():
-	gimbal_pitch = 45
-	gimbal_roll = 0
-	gimbal = [gimbal_pitch,gimbal_roll]
-	return gimbal
-	
+    gimbal_pitch = 45
+    gimbal_roll = 0
+    gimbal = [gimbal_pitch,gimbal_roll]
+    return gimbal
+    
 
 
 
 
 #connection to FC-------------------------------------------
-'''
+
 try:
     logging.info("Connecting to vehicle on: %s" % (connection_string,))
     vehicle = connect(connection_string, wait_ready=True)
     logging.info("Connection to FC: Go ")
 except:
     logging.info("Connection to FC: No go ")
-'''
+
+
 
 #Radio for emergency control---------------------------------
 
@@ -182,35 +183,39 @@ time.sleep(2)
 '''
 load_waypoints()
 
+home_tag = vehicle.location.global_relative_frame
+logging.info("Home tag saved alt: %s",home_tag.alt)
+
 while (current_waypoint < get_non_zero_rows(waypoints)):
-	# preparing 
-	logging.info("Directing to the waypoint: %s",waypoints[current_waypoint][0])
-	lat = waypoints[current_waypoint][2]
-	lon = waypoints[current_waypoint][3]
-	alt = waypoints[current_waypoint][4]
-	#vehicle.airspeed = 3;
-	point = LocationGlobalRelative(lat,lon,alt)
-	vehicle.gimbal.rotate(get_gimbal_angle()[0],get_gimbal_angle()[1],0)
-	logging.info("Gimble Pitch: %s Roll: %s",get_gimbal_angle()[0],get_gimbal_angle()[1])
+    # preparing 
+    logging.info("Directing to the waypoint: %s",waypoints[current_waypoint][0])
+    lat = waypoints[current_waypoint][2]
+    lon = waypoints[current_waypoint][3]
+    alt = waypoints[current_waypoint][4]
+    #vehicle.airspeed = 3;
+    point = LocationGlobalRelative(lat,lon,alt)
+    vehicle.gimbal.rotate(get_gimbal_angle()[0],get_gimbal_angle()[1],0)
+    logging.info("Gimble Pitch: %s Roll: %s",get_gimbal_angle()[0],get_gimbal_angle()[1])
 
-	#sending moving command
-	vehicle.simple_goto(point)
-	
-	vehicle_location_info = vehicle.location.global_relative_frame
-	lat0 = vehicle_location_info[0] 
-	lon0 = vehicle_location_info[1]
-	alt0 = vehicle_location_info[2]
+    #sending moving command
+   # vehicle.simple_goto(point)
+    
 
-	while True:
-		print(lat0,lon0,alt0)
-		time.sleep(1)
+    while True:
+        vehicle.mode = VehicleMode("GUIDED")
+        vehicle_location_info = vehicle.location.global_relative_frame
+        lat0 = vehicle_location_info.lat
+        lon0 = vehicle_location_info.lon
+        alt0 = vehicle_location_info.alt
+        print(lat0,lon0,alt0)
+        time.sleep(0.05)
 
 
-	current_waypoint = current_waypoint +1 
-	#current_waypoint is the waypoint drone directing to
+    current_waypoint = current_waypoint +1 
+    #current_waypoint is the waypoint drone directing to
 
-	while (True):
-		pass
+    while (True):
+        pass
 
 
 
