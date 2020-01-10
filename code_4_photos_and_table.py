@@ -29,6 +29,10 @@ sitl = dronekit_sitl.start_default()
 
 #Camera-----------------------------------------------------
 #camera = PiCamera()
+#create folder for saving images
+image_dir ="/home/pi/SNR-Drone-Flight-Computer-/photos"
+if not os.path.exists(image_dir):
+    os.mkdir(image_dir)
 
 
 #Initialization Variables-----------------------------------
@@ -83,27 +87,27 @@ def get_gimbal_angle():
     return gimbal
 
 def position_euclidian_dist(lat1,lon1,lat2,lon2):
-	return math.sqrt(math.pow(lat2-lat1,2) + math.pow(lon2-lon1,2))
+    return math.sqrt(math.pow(lat2-lat1,2) + math.pow(lon2-lon1,2))
 
     
 def height_euclidian_dist(h1,h2):
-	return h2-h1
+    return h2-h1
 
 
 def timestamp(waypoint,number):
-	if waypoint<10:
-		name_waypoint = "0"+str(waypoint)
-	else:
-		name_waypoint = str(waypoint)
+    if waypoint<10:
+        name_waypoint = "0"+str(waypoint)
+    else:
+        name_waypoint = str(waypoint)
 
-	if number<10:
-		name_number = "0"+str(number)
-	else:
-		name_number = str(number)
+    if number<10:
+        name_number = "0"+str(number)
+    else:
+        name_number = str(number)
 
-	name = name_waypoint+name_number+" "+time.ctime()
+    name = name_waypoint+name_number+" "+time.ctime()
 
-	return name
+    return name
 
 
 
@@ -184,8 +188,8 @@ except:
     logging.info("Arming : No Go")
 '''
 while not test_com:
-	logging.critical("Communication error")
-	time.sleep(10)
+    logging.critical("Communication error")
+    time.sleep(10)
 
 print("\nGuidance is internal--------------------------\n")
 
@@ -260,11 +264,11 @@ while (current_waypoint < get_non_zero_rows(waypoints)):
         
         time2 = time.time()
         if (time2 - time1)> photo_time_interval :
-        	#takeing image
-        	#camera.capture()
-        	photo_number = photo_number + 1 
-        	print("D:/Projects/Research_Project/SNR-Drone-Flight-Computer-/",timestamp(current_waypoint,photo_number),".jpg")
-        	time1 = time2
+            #takeing image
+            #camera.capture()
+            photo_number = photo_number + 1 
+            print("D:/Projects/Research_Project/SNR-Drone-Flight-Computer-/",timestamp(current_waypoint,photo_number),".jpg")
+            time1 = time2
 
         time.sleep(0.5)
 
